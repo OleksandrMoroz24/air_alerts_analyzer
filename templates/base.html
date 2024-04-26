@@ -1,0 +1,44 @@
+<!-- templates/base.html -->
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Повітряні тривоги</title>
+    <!-- Підключення Bootstrap для стилізації (опційно) -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Додаткові стилі -->
+    <style>
+        /* Ваші стилі тут */
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Навігаційне меню (якщо потрібно) -->
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% block content %}
+        <!-- Основний вміст сторінки буде вставлено тут -->
+        {% endblock %}
+    </div>
+
+    <footer class="footer bg-light mt-auto py-3">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2024 Моніторинг повітряних тривог</span>
+        </div>
+    </footer>
+
+    <!-- Підключення jQuery та Bootstrap JS (опційно) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Ваші скрипти -->
+    <script>
+        // Ваш JavaScript тут
+    </script>
+</body>
+</html>
