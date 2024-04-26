@@ -1,23 +1,23 @@
 from django.db import models
 
 
-class Region(models.Model):
-    regionId = models.AutoField(primary_key=True)
-    regionName = models.TextField()
-    regionType = models.TextField()
+class Alerts(models.Model):
+    alertid = models.AutoField(primary_key=True)
+    regionid = models.ForeignKey('Regions', models.DO_NOTHING, db_column='regionid', blank=True, null=True)
+    starttime = models.DateTimeField(blank=True, null=True)
+    endtime = models.DateTimeField(blank=True, null=True)
+    duration = models.DurationField(blank=True, null=True)
+    alerttype = models.TextField(blank=True, null=True)
+    iscontinue = models.BooleanField(blank=True, null=True)
 
-    def __str__(self):
-        return self.regionName
+    class Meta:
+        db_table = 'alerts'
 
 
-class Alert(models.Model):
-    alertId = models.AutoField(primary_key=True)
-    region = models.ForeignKey(Region, on_delete=models.CASCADE, db_column='regionId')
-    startTime = models.DateTimeField()
-    endTime = models.DateTimeField()
-    duration = models.DurationField()
-    alertType = models.TextField()
-    isContinue = models.BooleanField(default=False)
+class Regions(models.Model):
+    regionid = models.IntegerField(primary_key=True)
+    regionname = models.TextField()
+    regiontype = models.TextField()
 
-    def __str__(self):
-        return f"{self.alertType} from {self.startTime} to {self.endTime}"
+    class Meta:
+        db_table = 'regions'
