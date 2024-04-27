@@ -33,5 +33,30 @@
         <p><strong>Maximum Duration (minutes):</strong> {{ max_duration }}</p>
     </div>
     {% endif %}
+    {% if alerts %}
+    <div class="mt-4">
+        <h3>List of Alerts in Selected Period</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Duration</th>
+                    <th>Continuing</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                <tr>
+                    <td>{{ alert.starttime }}</td>
+                    <td>{{ alert.endtime }}</td>
+                    <td>{{ alert.duration}}</td>
+                    <td>{{ alert.iscontinue|yesno:"Yes,No" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

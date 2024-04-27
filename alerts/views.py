@@ -8,6 +8,7 @@ from datetime import datetime
 def region_alerts_analytics(request):
     context = {
         'regions': Regions.objects.all(),
+        'alerts': None,
         'count': None,
         'average_duration': None,
         'max_duration': None
@@ -31,6 +32,8 @@ def region_alerts_analytics(request):
             starttime__gte=start_datetime,
             endtime__lte=end_datetime
         )
+
+        context['alerts'] = alerts
 
         # Calculate count, average duration, and maximum duration
         context['count'] = alerts.count()
