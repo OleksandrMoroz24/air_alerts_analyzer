@@ -1,46 +1,32 @@
-<!-- alerts_analytics.html -->
 {% extends "base.html" %}
 
 {% block content %}
 <div class="container mt-3">
     <h2>Select Region and Time Period</h2>
-    <form method="post">
+    <form method="post" id="analyticsForm">
         {% csrf_token %}
-        <div class="form-group">
-            <label for="regionSelect">Region:</label>
-            <select id="regionSelect" name="regionid" class="form-control">
-                {% for region in regions %}
-                    <option value="{{ region.regionid }}">{{ region.regionname }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="startDate">Start Date:</label>
-            <input type="date" id="startDate" name="startdate" class="form-control" value="{{ start_date }}">
-        </div>
-        <div class="form-group">
-            <label for="endDate">End Date:</label>
-            <input type="date" id="endDate" name="enddate" class="form-control" value="{{ end_date }}">
-        </div>
-        <div class="form-group">
-            <label for="chartType">Chart Type:</label>
-            <select id="chartType" name="charttype" class="form-control">
-                <option value="hour" {% if chart_type == 'hour' %}selected{% endif %}>Hour of the Day</option>
-                <option value="weekday" {% if chart_type == 'weekday' %}selected{% endif %}>Day of the Week</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Get Analytics</button>
-    </form>
-
-    {% if count is not None %}
-    <div class="mt-4">
-        <h3>Analytics Results</h3>
-        <p><strong>Count:</strong> {{ count }}</p>
-        <p><strong>Average Duration (minutes):</strong> {{ average_duration }}</p>
-        <p><strong>Maximum Duration (minutes):</strong> {{ max_duration }}</p>
-    </div>
-    {% endif %}
-                <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="regionSelect">Region:</label>
+                    <select id="regionSelect" name="regionid" class="form-control">
+                        {% for region in regions %}
+                        <option value="{{ region.regionid }}" {% if selected_region == region.regionid|stringformat:"s" %}selected{% endif %}>{{ region.regionname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate" name="startdate" class="form-control" value="{{ start_date }}">
+                </div>
+                <div class="form-group">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" id="endDate" name="enddate" class="form-control" value="{{ end_date }}">
+                </div>
+                <button type="submit" class="btn btn-primary">Get Analytics</button>
+                <button type="button" class="btn btn-secondary" onclick="setForAllTime()">For all time</button>
+            </div>
+            <div class="col-md-6">
                 {% if alerts %}
                 <div style="max-height: 300px; overflow-y: auto;">
                     <h4>List of Alerts</h4>
@@ -67,77 +53,103 @@
                 </div>
                 {% endif %}
             </div>
+        </div>
+    </form>
 
-{% if weekday_counts %}
     <div class="mt-4">
-        <h3>Alerts Frequency by Day of the Week</h3>
-        <canvas id="dayOfWeekChart"></canvas>
+        <h3>Analytics Results</h3>
+        <p><strong>Count:</strong> {{ count }}</p>
+        <p><strong>Average Duration:</strong> {{ average_duration }}</p>
+        <p><strong>Maximum Duration:</strong> {{ max_duration }}</p>
     </div>
-    <script>
-        var ctx = document.getElementById('dayOfWeekChart').getContext('2d');
-        var chart = new Chart(ctx, {
+
+    <div class="mt-4 text-center">
+        <button id="btnHour" class="btn btn-secondary" onclick="updateChart('hour')">Hour of the Day</button>
+        <button id="btnWeekday" class="btn btn-secondary" onclick="updateChart('weekday')">Day of the Week</button>
+    </div>
+
+    <div class="mt-4">
+        <canvas id="hourOfDayChart" style="display: none;"></canvas>
+        <canvas id="dayOfWeekChart" style="display: none;"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    function setForAllTime() {
+        document.getElementById('startDate').value = '2022-02-24';  // Set the start date
+        document.getElementById('endDate').value = new Date().toISOString().slice(0, 10);  // Set today's date
+        document.getElementById('analyticsForm').submit();  // Submit the form
+    }
+
+    document.getElementById('btnHour').addEventListener('click', function() {
+        updateChart('hour');
+    });
+    document.getElementById('btnWeekday').addEventListener('click', function() {
+        updateChart('weekday');
+    });
+
+    function updateChart(chartType) {
+        var hourCanvas = document.getElementById('hourOfDayChart');
+        var weekCanvas = document.getElementById('dayOfWeekChart');
+
+        // Hide all canvases first
+        hourCanvas.style.display = 'none';
+        weekCanvas.style.display = 'none';
+
+        // Determine which canvas to show and update
+        var ctx = (chartType === 'hour' ? hourCanvas : weekCanvas).getContext('2d');
+        (chartType === 'hour' ? hourCanvas : weekCanvas).style.display = 'block';
+
+        if (window.myChart) {
+            window.myChart.destroy();
+        }
+        window.myChart = new Chart(ctx, {
             type: 'bar',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Alerts by Day of the Week',
-                    data: [
-                        {{ weekday_counts.2|default:"0" }},
+            data: getChartData(chartType),
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function getChartData(chartType) {
+        // Placeholder for actual data fetching logic
+        return chartType === 'hour' ? {
+            labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'],
+            datasets: [{
+                label: 'Alerts by Hour of the Day',
+                data: {{ hour_counts_list|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        } : {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Alerts by Day of the Week',
+                data: [ {{ weekday_counts.2|default:"0" }},
                         {{ weekday_counts.3|default:"0" }},
                         {{ weekday_counts.4|default:"0" }},
                         {{ weekday_counts.5|default:"0" }},
                         {{ weekday_counts.6|default:"0" }},
                         {{ weekday_counts.7|default:"0" }},
-                        {{ weekday_counts.1|default:"0" }}
+                        {{ weekday_counts.1|default:"0" }},
                     ],
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    </script>
-{% endif %}
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        };
+    }
 
-{% if chart_type == 'hour' and hour_counts_list %}
-    <div class="mt-4">
-        <h3>Alerts Frequency by Hour of the Day</h3>
-        <canvas id="hourOfDayChart"></canvas>
-    </div>
-    <script>
-        var ctx = document.getElementById('hourOfDayChart').getContext('2d');
-        var chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'],
-                datasets: [{
-                    label: 'Alerts by Hour of the Day',
-                    data: {{ hour_counts_list|safe }},
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    </script>
-    {% endif %}
-
-
-</div>
+    // Initialize default view
+    document.addEventListener('DOMContentLoaded', function() {
+        updateChart('hour');  // Default to "Hour of the Day"
+    });
+</script>
 {% endblock %}
-
-
