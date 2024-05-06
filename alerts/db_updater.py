@@ -1,6 +1,5 @@
 import requests
 from django_q.tasks import schedule
-
 from air_alerts_analyzer import settings
 from django.db import IntegrityError
 from .models import Alerts, Regions
@@ -27,7 +26,7 @@ def save_alerts(data):
 
                 # Спроба створення нового запису тривоги
                 try:
-                    Alerts.objects.create(
+                    Alerts.objects.update_or_create(
                         regionid=region,
                         starttime=start_date,
                         endtime=end_date,

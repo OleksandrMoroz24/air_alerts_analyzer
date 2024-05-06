@@ -9,11 +9,16 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label for="regionSelect">Region:</label>
+                    {% if selected_region %}
+                        <span style="height: 10px; width: 10px; border-radius: 50%; display: inline-block; background-color: {% if active_alerts %}red{% else %}green{% endif %};"></span>
+                        <span>{{ region_name }}</span>
+                    {% endif %}
                     <select id="regionSelect" name="regionid" class="form-control">
                         {% for region in regions %}
                         <option value="{{ region.regionid }}" {% if selected_region == region.regionid|stringformat:"s" %}selected{% endif %}>{{ region.regionname }}</option>
                         {% endfor %}
                     </select>
+                    
                 </div>
                 <div class="form-group">
                     <label for="startDate">Start Date:</label>
@@ -152,4 +157,17 @@
         updateChart('hour');  // Default to "Hour of the Day"
     });
 </script>
+    {% if weekly_frequency_all_time %}
+    <div class="mt-4">
+        <h3>Alert Frequency Analysis</h3>
+        <p>For all time frequency: {{ weekly_frequency_all_time }}</p>
+        <p>For last month frequency: {{ weekly_frequency_last_month }}</p>
+        <p>For last week frequency: {{ weekly_frequency_last_week }}</p>
+    </div>
+    {% endif %}
+    <div class="mt-4">
+        <h3>Аналітика на сьогоднішній день</h3>
+        <p>{{ chatgpt_report }}</p>
+    </div>
+    
 {% endblock %}

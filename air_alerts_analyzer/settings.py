@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'alerts',
+    'django_q',
 ]
 
 MIDDLEWARE = [
@@ -84,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',  # або інший backend, якщо не PostgreSQL
         'NAME': 'air_alert',
         'USER': 'postgres',
-        'PASSWORD': '8yhTDmu7t',
+        'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': 'localhost',  # Типово 'localhost', якщо база на тому ж сервері
         'PORT': '5432',  # Типовий порт для PostgreSQL
     }
@@ -109,6 +110,17 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+Q_CLUSTER = {
+    'name': 'DjangORM',
+    'workers': 4,
+    'timeout': 1800,  # 30 хвилин
+    'retry': 3600,    # 1 година
+    'queue_limit': 50,
+    'bulk': 10,
+    'orm': 'default',
+}
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -132,3 +144,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+TG_API_ID = os.getenv("TG_API_ID")
+TG_API_HASH = os.getenv("TG_API_HASH")
+TG_PHONE = os.getenv("TG_PHONE")
+ALERTS_API = os.getenv("ALERTS_API")
+OPENAI_KEY = os.getenv("OPENAI_KEY")
