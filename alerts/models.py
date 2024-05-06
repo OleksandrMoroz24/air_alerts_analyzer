@@ -3,7 +3,9 @@ from django.db import models
 
 class Alerts(models.Model):
     alertid = models.AutoField(primary_key=True)
-    regionid = models.ForeignKey('Regions', models.DO_NOTHING, db_column='regionid', blank=True, null=True)
+    regionid = models.ForeignKey(
+        "Regions", models.DO_NOTHING, db_column="regionid", blank=True, null=True
+    )
     starttime = models.DateTimeField(blank=True, null=True)
     endtime = models.DateTimeField(blank=True, null=True)
     duration = models.DurationField(blank=True, null=True)
@@ -11,7 +13,7 @@ class Alerts(models.Model):
     iscontinue = models.BooleanField(blank=True, null=True)
 
     class Meta:
-        db_table = 'alerts'
+        db_table = "alerts"
 
 
 class Regions(models.Model):
@@ -20,4 +22,4 @@ class Regions(models.Model):
     regiontype = models.TextField()
 
     class Meta:
-        db_table = 'regions'
+        db_table = "regions"

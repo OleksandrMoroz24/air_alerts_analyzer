@@ -2,13 +2,13 @@
 
 {% block content %}
 <div class="container mt-3">
-    <h2>Select Region and Time Period</h2>
+    <h2>Оберіть регіон та проміжок часу</h2>
     <form method="post" id="analyticsForm">
         {% csrf_token %}
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group">
-                    <label for="regionSelect">Region:</label>
+                    <label for="regionSelect">Регіон:</label>
                     {% if selected_region %}
                         <span style="height: 10px; width: 10px; border-radius: 50%; display: inline-block; background-color: {% if active_alerts %}red{% else %}green{% endif %};"></span>
                         <span>{{ region_name }}</span>
@@ -21,27 +21,26 @@
                     
                 </div>
                 <div class="form-group">
-                    <label for="startDate">Start Date:</label>
+                    <label for="startDate">Початкова дата:</label>
                     <input type="date" id="startDate" name="startdate" class="form-control" value="{{ start_date }}">
                 </div>
                 <div class="form-group">
-                    <label for="endDate">End Date:</label>
+                    <label for="endDate">Кінцева дата:</label>
                     <input type="date" id="endDate" name="enddate" class="form-control" value="{{ end_date }}">
                 </div>
-                <button type="submit" class="btn btn-primary">Get Analytics</button>
-                <button type="button" class="btn btn-secondary" onclick="setForAllTime()">For all time</button>
+                <button type="submit" class="btn btn-primary">Проаналізувати</button>
+                <button type="button" class="btn btn-secondary" onclick="setForAllTime()">За весь час</button>
             </div>
             <div class="col-md-6">
                 {% if alerts %}
-                <div style="max-height: 300px; overflow-y: auto;">
-                    <h4>List of Alerts</h4>
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <h4>Список тривог</h4>
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Start Time</th>
-                                <th>End Time</th>
-                                <th>Duration</th>
-                                <th>Continuing</th>
+                                <th>Початок</th>
+                                <th>Кінець</th>
+                                <th>Тривалість</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -50,7 +49,6 @@
                                 <td>{{ alert.starttime }}</td>
                                 <td>{{ alert.endtime }}</td>
                                 <td>{{ alert.duration }}</td>
-                                <td>{{ alert.iscontinue|yesno:"Yes,No" }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -61,16 +59,32 @@
         </div>
     </form>
 
-    <div class="mt-4">
-        <h3>Analytics Results</h3>
-        <p><strong>Count:</strong> {{ count }}</p>
-        <p><strong>Average Duration:</strong> {{ average_duration }}</p>
-        <p><strong>Maximum Duration:</strong> {{ max_duration }}</p>
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Left side content -->
+            <div class="col-md-6">
+                <h3>Кількість тривог та тривалість</h3>
+                <p><strong>Кількість:</strong> {{ count }}</p>
+                <p><strong>Середня тривалість:</strong> {{ average_duration }}</p>
+                <p><strong>Максимальна тривалість:</strong> {{ max_duration }}</p>
+            </div>
+            
+            <!-- Right side content -->
+            {% if weekly_frequency_all_time %}
+            <div class="col-md-6">
+                <h3>Тижнева частота тривог</h3>
+                <p><strong>За весь час:</strong> {{ weekly_frequency_all_time }}</p>
+                <p><strong>За останній місяць:</strong> {{ weekly_frequency_last_month }}</p>
+                <p><strong>За останній тиждень:</strong> {{ weekly_frequency_last_week }}</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="mt-4 text-center">
-        <button id="btnHour" class="btn btn-secondary" onclick="updateChart('hour')">Hour of the Day</button>
-        <button id="btnWeekday" class="btn btn-secondary" onclick="updateChart('weekday')">Day of the Week</button>
+    <div class="mt-4">
+        <h3>Гістограма кількості тривог</h3>
+        <button id="btnHour" class="btn btn-secondary" onclick="updateChart('hour')">За годинами дня</button>
+        <button id="btnWeekday" class="btn btn-secondary" onclick="updateChart('weekday')">За днями тижня</button>
     </div>
 
     <div class="mt-4">
@@ -127,16 +141,16 @@
         return chartType === 'hour' ? {
             labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'],
             datasets: [{
-                label: 'Alerts by Hour of the Day',
+                label: 'Тривоги за годинами дня',
                 data: {{ hour_counts_list|safe }},
                 backgroundColor: 'rgba(54, 162, 235, 0.5)',
                 borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 1
             }]
         } : {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            labels: ['Пн', 'Вт', 'Ср', 'Чр', 'Пт', 'Сб', 'Нд'],
             datasets: [{
-                label: 'Alerts by Day of the Week',
+                label: 'Тривоги за днями тижня',
                 data: [ {{ weekday_counts.2|default:"0" }},
                         {{ weekday_counts.3|default:"0" }},
                         {{ weekday_counts.4|default:"0" }},
@@ -157,17 +171,39 @@
         updateChart('hour');  // Default to "Hour of the Day"
     });
 </script>
-    {% if weekly_frequency_all_time %}
-    <div class="mt-4">
-        <h3>Alert Frequency Analysis</h3>
-        <p>For all time frequency: {{ weekly_frequency_all_time }}</p>
-        <p>For last month frequency: {{ weekly_frequency_last_month }}</p>
-        <p>For last week frequency: {{ weekly_frequency_last_week }}</p>
+    
+    
+    <button type="submit" class="btn btn-primary" id="analyzeButton" style="margin-top: 20px">Отримати аналіз від ШІ</button>
+    <div id="analysisResult" style="margin-top: 20px; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px;">
+        <h4>Результати аналізу</h4>
+        <p id="chatGptContent">Результати з'являться тут після аналізу ...</p>
     </div>
-    {% endif %}
-    <div class="mt-4">
-        <h3>Аналітика на сьогоднішній день</h3>
-        <p>{{ chatgpt_report }}</p>
-    </div>
+    <script>
+    document.getElementById('analyzeButton').addEventListener('click', function() {
+        var data = {
+            'date': '{{ today }}',
+            'region_name': '{{ region_name }}',
+            'active_alerts': '{{ active_alerts }}',
+            'weekly_frequency_all_time': '{{ weekly_frequency_all_time }}',
+            'weekly_frequency_last_month': '{{ weekly_frequency_last_month }}',
+            'weekly_frequency_last_week': '{{ weekly_frequency_last_week }}',
+            'weekday_counts': '{{ weekday_counts }}',
+            'hour_counts': '{{ hour_counts_list }}'
+        };
+        fetch('{% url 'get_chatgpt_analysis' %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('analysisResult').textContent = data.chatgpt_report;
+        })
+        .catch(error => console.error('Error:', error));
+    });
+    </script>
     
 {% endblock %}

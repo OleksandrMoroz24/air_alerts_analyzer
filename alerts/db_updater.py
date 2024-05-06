@@ -8,21 +8,23 @@ from dateutil.parser import parse
 
 def save_alerts(data):
     for entry in data:
-        region_id = entry['regionId']
-        region_name = entry['regionName']
-        alarms = entry['alarms']
+        region_id = entry["regionId"]
+        region_name = entry["regionName"]
+        alarms = entry["alarms"]
 
         # Перевіряємо та оновлюємо регіон, якщо потрібно
-        region, created = Regions.objects.get_or_create(regionid=region_id, defaults={'regionname': region_name})
+        region, created = Regions.objects.get_or_create(
+            regionid=region_id, defaults={"regionname": region_name}
+        )
 
         for alarm in alarms:
-            is_continue = alarm.get('isContinue', False)
+            is_continue = alarm.get("isContinue", False)
             # Додаємо тільки ті тривоги, де isContinue = False
             if not is_continue:
-                start_date = alarm['startDate']
-                end_date = alarm['endDate']
+                start_date = alarm["startDate"]
+                end_date = alarm["endDate"]
                 duration = calculate_duration(start_date, end_date)
-                alert_type = alarm.get('alertType', 'UNKNOWN')
+                alert_type = alarm.get("alertType", "UNKNOWN")
 
                 # Спроба створення нового запису тривоги
                 try:
@@ -32,7 +34,7 @@ def save_alerts(data):
                         endtime=end_date,
                         duration=duration,
                         alerttype=alert_type,
-                        iscontinue=is_continue
+                        iscontinue=is_continue,
                     )
                 except IntegrityError:
                     # Якщо запис вже існує, можемо оновити інформацію або пропустити
@@ -47,10 +49,10 @@ def calculate_duration(start, end):
 
 
 def fetch_alerts_from_api(regionId):
-    url = f'https://api.ukrainealarm.com/api/v3/alerts/regionHistory?regionId={regionId}'
-    headers = {
-        'Authorization': settings.ALERTS_API
-    }
+    url = (
+        f"https://api.ukrainealarm.com/api/v3/alerts/regionHistory?regionId={regionId}"
+    )
+    headers = {"Authorization": settings.ALERTS_API}
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -62,4 +64,8 @@ def fetch_alerts_from_api(regionId):
 def schedule_alerts_fetching():
     regions = Regions.objects.all()
     for region in regions:
-        schedule('alerts.db_updater.fetch_alerts_from_api', regionId=str(region.regionid), schedule_type='O')
+        schedule(
+            "alerts.db_updater.fetch_alerts_from_api",
+            regionId=str(region.regionid),
+            schedule_type="O",
+        )
