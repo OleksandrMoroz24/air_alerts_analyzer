@@ -1,9 +1,7 @@
 from django.shortcuts import render
 from django.db.models import Count, Avg, Max
 from django.db.models.functions import ExtractWeekDay, ExtractHour
-from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from django.core.serializers import serialize
 import json
 
 from .models import Alerts, Regions
@@ -150,4 +148,22 @@ def get_chatgpt_analysis(request):
         )
         report = analyze_report_with_openai(message)
         return JsonResponse({"chatgpt_report": report})
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+def get_chatgpt_analysis_with_tg(request):
+    if request.method == "POST":
+        tg_messages = fetch_telegram_messages()
+        data = json.loads(request.body)
+        message = (
+            f"Сьогоднішня дата: {data['date']}, Регіон: {data['region_name']}, Чи є тривога: {data['active_alerts']}, "
+            f"Використовуючи цей аналіз заснований на статистичних даних: {data['chatgpt_report']}"
+            f"та ці останні повідомлення від Повітряних сил України {tg_messages},"
+            f"надай більш точний прогноз використовуючи контекст останніх повідомлень які стосуються вказаного регіону,"
+            f"Використовуй наступні правила: якщо в сусідніх регіонах є тривога, то в цьому регіоні вище шанс тривоги,"
+            f"якщо взлетів міг, то тривога може тривати 30хв - 5 год, якщо шахеди - до години, балістика до години "
+
+
+        )
+        report = analyze_report_with_openai(message)
+        return JsonResponse({"chatgpt_report_with_tg": report})
     return JsonResponse({"error": "Invalid request"}, status=400)

@@ -148,16 +148,16 @@
                 borderWidth: 1
             }]
         } : {
-            labels: ['Пн', 'Вт', 'Ср', 'Чр', 'Пт', 'Сб', 'Нд'],
+            labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
             datasets: [{
                 label: 'Тривоги за днями тижня',
-                data: [ {{ weekday_counts.2|default:"0" }},
+                data: [ {{ weekday_counts.1|default:"0" }},
+                        {{ weekday_counts.2|default:"0" }},
                         {{ weekday_counts.3|default:"0" }},
                         {{ weekday_counts.4|default:"0" }},
                         {{ weekday_counts.5|default:"0" }},
                         {{ weekday_counts.6|default:"0" }},
                         {{ weekday_counts.7|default:"0" }},
-                        {{ weekday_counts.1|default:"0" }},
                     ],
                 backgroundColor: 'rgba(255, 99, 132, 0.5)',
                 borderColor: 'rgba(255, 99, 132, 1)',
@@ -173,37 +173,74 @@
 </script>
     
     
-    <button type="submit" class="btn btn-primary" id="analyzeButton" style="margin-top: 20px">Отримати аналіз від ШІ</button>
-    <div id="analysisResult" style="margin-top: 20px; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px;">
-        <h4>Результати аналізу</h4>
-        <p id="chatGptContent">Результати з'являться тут після аналізу ...</p>
+    <div class="mt-4">
+        <button type="button" class="btn btn-primary" id="analyzeButton" style="margin-right: 5px">Аналіз від ШІ</button>
+        <button type="button" class="btn btn-primary" id="tgAnalysisButton">Аналіз з використанням останніх новин</button>
+    </div>
+
+    <div id="analysisResult" style="margin-top: 15px; margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px;">
+        <p id="chatGptContent">Результати з'являться тут після аналізу...</p>
     </div>
     <script>
-    document.getElementById('analyzeButton').addEventListener('click', function() {
-        var data = {
-            'date': '{{ today }}',
-            'region_name': '{{ region_name }}',
-            'active_alerts': '{{ active_alerts }}',
-            'weekly_frequency_all_time': '{{ weekly_frequency_all_time }}',
-            'weekly_frequency_last_month': '{{ weekly_frequency_last_month }}',
-            'weekly_frequency_last_week': '{{ weekly_frequency_last_week }}',
-            'weekday_counts': '{{ weekday_counts }}',
-            'hour_counts': '{{ hour_counts_list }}'
-        };
-        fetch('{% url 'get_chatgpt_analysis' %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('analysisResult').textContent = data.chatgpt_report;
-        })
-        .catch(error => console.error('Error:', error));
-    });
+        // Збереження звіту в глобальній змінній
+        let chatGptReport = '';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const tgAnalysisButton = document.getElementById('tgAnalysisButton');
+            tgAnalysisButton.classList.add('btn-disabled');  // Додає стиль до кнопки, робить її недоступною
+            
+        document.getElementById('analyzeButton').addEventListener('click', function() {
+            var data = {
+                'date': '{{ today }}',
+                'region_name': '{{ region_name }}',
+                'active_alerts': '{{ active_alerts }}',
+                'weekly_frequency_all_time': '{{ weekly_frequency_all_time }}',
+                'weekly_frequency_last_month': '{{ weekly_frequency_last_month }}',
+                'weekly_frequency_last_week': '{{ weekly_frequency_last_week }}',
+                'weekday_counts': '{{ weekday_counts }}',
+                'hour_counts': '{{ hour_counts_list }}'
+            };
+            fetch('{% url 'get_chatgpt_analysis' %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                        document.getElementById('analysisResult').textContent = data.chatgpt_report;
+                        tgAnalysisButton.classList.remove('btn-disabled');  // Видаляє стиль, робить кнопку доступною
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        tgAnalysisButton.classList.add('btn-disabled');  // Знову робить кнопку недоступною у разі помилки
+                    });
+                });
+            });
+    
+        document.getElementById('tgAnalysisButton').addEventListener('click', function() {
+            var data = {
+                'date': '{{ today }}',
+                'region_name': '{{ region_name }}',
+                'active_alerts': '{{ active_alerts }}',
+                'chatgpt_report': chatGptReport  // Додавання попереднього звіту в новий запит
+            };
+            fetch('{% url 'get_chatgpt_analysis_with_tg' %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('analysisResult').textContent = data.chatgpt_report_with_tg;
+            })
+            .catch(error => console.error('Error:', error));
+        });
     </script>
     
 {% endblock %}

@@ -12,7 +12,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* Ваші стилі тут */
+        .btn-disabled {
+            opacity: 0.2;  // Зробить кнопку напівпрозорою
+            pointer-events: none;  // Запобігає будь-яким подіям миші, включно з кліками
+            cursor: not-allowed;  // Змінює курсор, щоб показати, що кнопка недоступна
+        }
     </style>
 </head>
 <body>
